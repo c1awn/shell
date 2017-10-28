@@ -1,0 +1,8 @@
+#!/bin/bash
+#wrttien by chawn @171028
+if [ `netstat -lntp|grep ":80 "|wc -l` -gt 0 ]
+then
+echo "the service is ` netstat -lntp |grep ":80 "|awk '{print $7}'|awk -F "/|:" '{print $2}'`"
+else
+echo "no serivce for 80!  please recheck! "
+fi

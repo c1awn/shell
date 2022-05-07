@@ -41,7 +41,7 @@ ip_diff=/tmp/ip_diff.txt
 ip_end=/tmp/ip_end.txt
 ip_other=/tmp/ip_other.txt
 
-getlog(){
+getlogs(){
 Tt=`date +%s`
 #获取一天前的时间戳86400s
 Ft=`expr ${Tt} - 86400`
@@ -79,7 +79,7 @@ diff(){
 }
 
 #执行阶段
-getlog
+getlogs
 format
 if [ -s ${myip} ];then
   diff

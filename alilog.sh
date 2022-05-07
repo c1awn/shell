@@ -23,8 +23,11 @@ cat $out |sed '/source/d'|sed '/time/d'|sed -n '{N;s/\n/\t/p}'|sed '/\}/d'|sed '
 }
 
 diff(){
+  #取交集
   sort ${myip} ${waf} |uniq -d > ${ip_diff}
+  #取交集
   sort ${myip} ${ip_diff} |uniq -d  >${ip_end}
+  #取差集，得到不在黑名单的ip
   sort ${myip} ${ip_end} |uniq -u  >${ip_other}
   if [ -s ${ip_end} ];then
     echo "critical 以下攻击ip在黑名单中"

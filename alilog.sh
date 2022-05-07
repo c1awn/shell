@@ -41,7 +41,8 @@ diff(){
 }
 
 #执行阶段
-#format
+getlog
+format
 if [ -s ${myip} ];then
   diff
 else

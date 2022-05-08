@@ -1,5 +1,5 @@
 #!/bin/sh
-#说明：本脚本通过aliyunlog cli执行SQL得到初始结果，包含ip、pv等，再对比ip和黑名单ip
+#说明：本脚本通过aliyunlog cli执行SQL得到初始结果，包含ip、pv等，再对比ip和黑名单ip，最后发送钉钉告警
 cat getlogs.json 样例
 # {
 # "topic": "slb_layer7_access_log",
@@ -33,13 +33,17 @@ cat getlogs.json 样例
 
 
 
+dir=/home/sls
 file=./getlogs.json
 out=/tmp/ali.log
 myip=/tmp/ip.txt
+myip_pv=/tmp/ip_pv.txt
 waf=./waf_black.txt
 ip_diff=/tmp/ip_diff.txt
 ip_end=/tmp/ip_end.txt
 ip_other=/tmp/ip_other.txt
+dd_txt=/tmp/dd.txt
+send_txt=/tmp/send.txt
 
 getlogs(){
 Tt=`date +%s`
@@ -56,34 +60,58 @@ aliyunlog log get_logs --request="file://${file}" --format-output=json,no_escape
 format(){
 #得到ip字段，sed -n '{N;s/\n/\t/p}'合并行，筛选pv大于100的
 cat $out |sed '/source/d'|sed '/time/d'|sed -n '{N;s/\n/\t/p}'|sed '/\}/d'|sed '/\[/d'|sed 's/"//g'|awk -F '[,| ]'  '{print $6,$(NF-1)}'|awk '{if($2>=100)print $1}' >${myip}
+cat $out |sed '/source/d'|sed '/time/d'|sed -n '{N;s/\n/\t/p}'|sed '/\}/d'|sed '/\[/d'|sed 's/"//g'|awk -F '[,| ]'  '{print $6":"$(NF-1)}'|awk -F: '{if($2>=100)print $0}' >${myip_pv}
 #echo ${myip}
 #cat ${myip}
 }
 
 diff(){
-  #取交集
+  #取交集，如果${waf}事先处理过，不存在重复值，那可以只取一次交集
   sort ${myip} ${waf} |uniq -d > ${ip_diff}
-  #取交集，得到在黑名单的ip
   sort ${myip} ${ip_diff} |uniq -d  >${ip_end}
-  #取差集，得到不在黑名单的ip
+  #取差集
   sort ${myip} ${ip_end} |uniq -u  >${ip_other}
   if [ -s ${ip_end} ];then
-    echo "critical 以下攻击ip在黑名单中"
-    cat ${ip_end}
-    echo "info 以下攻击ip不在黑名单中"
-    cat ${ip_other}
+    echo "---info:为空说明不存在ip---"   >${dd_txt}
+    echo "critical:以下攻击ip在WAF黑名单中" >>${dd_txt}
+    cat ${ip_end}                        >>${dd_txt}
+    echo "info:以下攻击ip不在WAF黑名单中"   >>${dd_txt}
+    cat ${ip_other}                      >>${dd_txt}  
   else
-    echo "info all攻击ip不在黑名单中"
-    cat ${myip}
+    echo "info:all攻击ip不在WAF黑名单中"    >${dd_txt}
+    cat ${myip}                          >>${dd_txt}
   fi
+  echo  '---info:all ip 如下---'          >>${dd_txt}
+  cat ${myip_pv}                         >>${dd_txt}
+  cat ${dd_txt}|tr "\n" ','|sed 's/,/\\n/g' >${send_txt} 
+  #空格编码，此处如果不转化空格为Unicode编码，那下面钉钉的'${content}'会把空格再次解析成‘’，导致格式错误
+  sed -i 's/ /\\u0020/g' ${send_txt}
 }
 
+dd_send(){
+content=`cat ${send_txt}`
+t=`date +%Y-%m-%d_%H:%M:%S`
+curl 'https://oapi.dingtalk.com/robot/send?access_token=XXX' \
+   -H 'Content-Type: application/json' \
+   -d '
+  {"msgtype": "text", 
+   "isAtAll": true,
+    "text": {
+        "content": "【attack告警】\n{time: '$t'}\n'${content}'"
+     },
+    "at": {
+        "isAtAll": true
+    }
+  }'
+}
 #执行阶段
+cd ${dir}
 getlogs
 format
 if [ -s ${myip} ];then
   diff
+  dd_send
 else
-  echo "本时段无符合要求的ip"
+  echo "info:本时段无符合要求的ip"
 fi
 exit 0

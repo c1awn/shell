@@ -1,0 +1,40 @@
+    #CDN回源
+    set_real_ip_from 116.211.219.0/24;
+    set_real_ip_from 14.17.67.0/24;
+    set_real_ip_from 180.101.204.0/24;
+    set_real_ip_from 119.188.53.0/24;
+    set_real_ip_from 221.228.217.0/24;
+    set_real_ip_from 111.19.202.0/24;
+    set_real_ip_from 120.220.184.0/24;
+    set_real_ip_from 139.196.128.0/24;
+    set_real_ip_from 123.156.198.0/24;
+    set_real_ip_from 101.69.218.0/24;
+    set_real_ip_from 45.251.102.0/24;
+    set_real_ip_from 120.226.153.0/24;
+    set_real_ip_from 36.249.69.0/24;
+    set_real_ip_from 113.250.80.0/24;
+    set_real_ip_from 8.141.176.0/24;
+    set_real_ip_from 221.195.163.0/24;
+    set_real_ip_from 111.62.214.0/24;
+    set_real_ip_from 120.27.74.0/24;
+    set_real_ip_from 120.39.192.0/24;
+    set_real_ip_from 180.121.80.0/24;
+    set_real_ip_from 47.110.176.0/24;
+    set_real_ip_from 47.114.215.0/24;
+    set_real_ip_from 113.219.138.0/24;
+    set_real_ip_from 101.37.183.0/24;
+    set_real_ip_from 27.155.69.0/24;
+    set_real_ip_from 140.205.80.0/24;
+    set_real_ip_from 150.138.76.0/24;
+    set_real_ip_from 8.132.19.0/24;
+    set_real_ip_from 118.190.214.0/24;
+    #waf回源
+    set_real_ip_from 36.156.89.0/24;
+    set_real_ip_from 39.96.119.0/24;
+    set_real_ip_from 39.96.158.0/24;
+    set_real_ip_from 39.96.130.0/24;
+    #slb回源
+    set_real_ip_from 100.64.0.0/10;
+    real_ip_header  X-Forwarded-For;
+    #配合set_real_ip_from使用，默认关闭
+    real_ip_recursive on;

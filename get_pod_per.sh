@@ -38,3 +38,4 @@ diff(){
 
 get_per
 diff
+exit 0

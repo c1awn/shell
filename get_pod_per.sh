@@ -22,18 +22,24 @@ for pod in `kget |grep $service|grep -v $exclude|awk '{print $1}'|xargs`;do
 done
 }
 
-#重启pod函数
+#重启pod函数，不推荐
 life(){
   num=`kdes kmsp-deployment-${service} |grep desired|awk '{print $2}'`
   kubectl scale deployment kmsp-deployment-${service} --replicas=0 -n $ns
   kubectl scale deployment kmsp-deployment-${service} --replicas=$num -n $ns
 }
 
+#滚动重启，推荐
+new(){
+  kubectl rollout restart deployment  kmsp-deployment-${service} -n $ns
+}
+
+
 #比较满足条件的pod数，超过即重启pod
 diff(){
   result=`awk '{if($NF>='$limit'){a+=1;}}END{print a/NR}' $out`
   #浮点和整数比较
-  [[ $(echo "$result > $unsafe"|bc) -eq 1 ]]&&echo $result&&life
+  [[ $(echo "$result > $unsafe"|bc) -eq 1 ]]&&echo $result&&new
 }
 
 get_per

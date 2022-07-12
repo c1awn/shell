@@ -1,4 +1,5 @@
 #!/bin/sh 
+#set -x
 ns=namespace
 service=test
 exclude=test-admin
@@ -9,7 +10,7 @@ limit=0.9
 unsafe=0.5
 
 alias kget='kubectl get pods -n $ns '
-alias kexec='kubectl exec -it -n $ns '
+alias kexec='kubectl exec  -n $ns '
 alias kcp='kubectl cp  -n $ns  '
 alias kdes='kubectl describe deployments -n $ns '
 
@@ -17,6 +18,7 @@ alias kdes='kubectl describe deployments -n $ns '
 get_per(){
 >$out
 for pod in `kget |grep $service|grep -v $exclude|awk '{print $1}'|xargs`;do 
+  #如果用cron，容器cat得到的换行可能不是\r\n，而是\n
   per=`kexec $pod -- cat  /sys/fs/cgroup/memory/memory.usage_in_bytes /sys/fs/cgroup/memory/memory.limit_in_bytes /sys/fs/cgroup/memory/memory.stat|sed ':a;N;s/\r\n/\t/;ba;'|awk '{printf "%g\n",($1-$(NF-4))/$2}'`
   echo $pod $per >>$out
 done
